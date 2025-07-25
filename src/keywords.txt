@@ -1,0 +1,219 @@
+############################################
+# Syntax Coloring Map for MTobjects 1.0.2
+############################################
+
+############################################
+# Constants (LITERAL1)
+############################################
+
+# Globales
+PAS_D_ACTION	LITERAL1
+micro_seconde	LITERAL1
+micro_secondes	LITERAL1
+milli_seconde	LITERAL1
+milli_secondes	LITERAL1
+MT_ON	LITERAL1
+MT_OFF	LITERAL1
+MT_INFINI	LITERAL1
+
+
+# Boutons
+si_non_appuye	LITERAL1
+RADIO_BUTTON_0	LITERAL1
+RADIO_BUTTON_1	LITERAL1
+RADIO_BUTTON_2	LITERAL1
+RADIO_BUTTON_3	LITERAL1
+RADIO_BUTTON_4	LITERAL1
+RADIO_BUTTON_5	LITERAL1
+RADIO_BUTTON_6	LITERAL1
+RADIO_BUTTON_7	LITERAL1
+RADIO_BUTTON_8	LITERAL1
+RADIO_BUTTON_9	LITERAL1
+RADIO_GROUPE_0	LITERAL1
+RADIO_GROUPE_1	LITERAL1
+RADIO_GROUPE_2	LITERAL1
+RADIO_GROUPE_3	LITERAL1
+
+# Horloges
+action_et_arret	LITERAL1
+actions_et_arret	LITERAL1
+
+# PWM
+niveau_et_arret	LITERAL1
+niveaux_et_arret	LITERAL1
+on_commence_par	LITERAL1
+impulsions_de	LITERAL1
+impulsion_de	LITERAL1
+periodes_de	LITERAL1
+periode_de	LITERAL1
+pour_cent	LITERAL1
+
+# Pas à pas
+RPM	LITERAL1
+RPS	LITERAL1
+NON_CONNECTEE	LITERAL1
+DEMI_PAS	LITERAL1
+PAS_ENTIERS	LITERAL1
+UNE_PHASE	LITERAL1
+SENS_PAR_DEFAUT	LITERAL1
+SENS_INVERSE	LITERAL1
+CONTINUE	LITERAL1
+micro_pas	LITERAL1
+pas_ou_micro_pas	LITERAL1
+micro_secondes	LITERAL1
+micro_secondes_par_pas	LITERAL1
+position_absolue	LITERAL1
+pin_Step	LITERAL1
+pin_Dir	LITERAL1
+pin_EN	LITERAL1
+pin_A1	LITERAL1
+pin_B1	LITERAL1
+pin_A2	LITERAL1
+pin_B2	LITERAL1
+
+# Servo
+milli_secondes_pour_aller_de_0_a_180	LITERAL1
+micro_secondes_initialement	LITERAL1
+degres_initialement	LITERAL1
+micro_secondes_minimum	LITERAL1
+micro_secondes_maximum	LITERAL1
+micro_secondes_de_periode	LITERAL1
+can_pour_0_degree	LITERAL1
+can_pour_180_degree	LITERAL1
+
+############################################
+# Variables (LITERAL1)
+############################################
+
+# Boutons
+bounce	LITERAL1
+doubleBounce	LITERAL1
+
+
+
+############################################
+# Datatypes (KEYWORD1)
+############################################
+
+MTquickObject	KEYWORD1
+MTmediumObject	KEYWORD1
+MTslowObject	KEYWORD1
+MTbutton	KEYWORD1
+MTdoubleButton	KEYWORD1
+MTtripleButton	KEYWORD1
+MTcheckButton	KEYWORD1
+MTradioButton	KEYWORD1
+MTclock	KEYWORD1
+MTdoubleClock	KEYWORD1
+MThardPWM	KEYWORD1
+MTsoftPWM	KEYWORD1
+MTservo	KEYWORD1
+MTservo4fils	KEYWORD1
+MTulnStepper	KEYWORD1
+MTstepStepper	KEYWORD1
+
+############################################
+# Methods and Functions (KEYWORD2)
+############################################
+
+# Globales
+MTtimeBase	KEYWORD2
+MTmillis	KEYWORD2
+MTdigitalRead	KEYWORD2
+MTstopDelayMillis	KEYWORD2
+MTstartDelayMillis	KEYWORD2
+
+# Boutons
+onSelect	KEYWORD2
+setOnSelectFunction	KEYWORD2
+onDoubleSelect	KEYWORD2
+setOnDoubleSelectFunction	KEYWORD2
+onTripleSelect	KEYWORD2
+setOnTripleSelectFunction	KEYWORD2
+onUnselect	KEYWORD2
+setOnUnselectFunction	KEYWORD2
+getSelect	KEYWORD2
+select	KEYWORD2
+unselect	KEYWORD2
+getValeur	KEYWORD2
+getGroupe	KEYWORD2
+unselectMTradioButton	KEYWORD2
+getMTradioButtonValeur	KEYWORD2
+getMTradioButtonPointeur	KEYWORD2
+
+# Horloges
+setInterval_ms	KEYWORD2
+setInterval1_ms	KEYWORD2
+setInterval2_ms	KEYWORD2
+getInterval_ms	KEYWORD2
+getInterval1_ms	KEYWORD2
+getInterval2_ms	KEYWORD2
+onTime	KEYWORD2
+setOnTimeFunction	KEYWORD2
+onTime1	KEYWORD2
+setOnTimeFunction1	KEYWORD2
+onTime2	KEYWORD2
+setOnTimeFunction2	KEYWORD2
+setNumberOfActions	KEYWORD2
+getNumberOfActions	KEYWORD2
+getNumberOfActionsRemains	KEYWORD2
+start	KEYWORD2
+stop	KEYWORD2
+getActive	KEYWORD2
+
+# PWM
+setInpulse	KEYWORD2
+getInpulse	KEYWORD2
+setDutyCycle	KEYWORD2
+getDutyCycle	KEYWORD2
+setPeriod	KEYWORD2
+getPeriod	KEYWORD2
+getResolution	KEYWORD2
+detach	KEYWORD2	KEYWORD2
+attach	KEYWORD2	KEYWORD2
+setNumberOfLevels	KEYWORD2
+getNumberOfLevels	KEYWORD2
+getNumberOfLevelsRemains	KEYWORD2
+onStop	KEYWORD2
+
+# Servo
+setTimeFrom0To180	KEYWORD2
+getTimeFrom0To180	KEYWORD2
+write	KEYWORD2
+writeDegree	KEYWORD2
+writeMicrosecond	KEYWORD2
+readMicrosecond	KEYWORD2
+readDegree	KEYWORD2
+getMinInpulseMicroseconds	KEYWORD2
+setMinInpulseMicroseconds	KEYWORD2
+getMaxInpulseMicroseconds	KEYWORD2
+setMaxInpulseMicroseconds	KEYWORD2
+getRun	KEYWORD2
+
+# Pas à pas
+move	KEYWORD2
+moveAndWait	KEYWORD2
+moveTo	KEYWORD2
+moveToAndWait	KEYWORD2
+setOrigin	KEYWORD2
+setPosition	KEYWORD2
+getPosition	KEYWORD2
+getRest	KEYWORD2
+wait	KEYWORD2
+stop	KEYWORD2
+stopped	KEYWORD2
+onStop	KEYWORD2
+setOnStopFunction	KEYWORD2
+setReverse	KEYWORD2
+setStepsPerTurn	KEYWORD2
+getStepsPerTurn	KEYWORD2
+setStepsPerTurn	KEYWORD2
+getStepsPerTurn	KEYWORD2
+setMode	KEYWORD2
+setSpeed	KEYWORD2
+getSpeedMicrosecond	KEYWORD2
+getSpeedRPS	KEYWORD2
+getSpeedRPM	KEYWORD2
+
+
+
