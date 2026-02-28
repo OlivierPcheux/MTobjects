@@ -33,6 +33,10 @@ RADIO_GROUPE_0	LITERAL1
 RADIO_GROUPE_1	LITERAL1
 RADIO_GROUPE_2	LITERAL1
 RADIO_GROUPE_3	LITERAL1
+lignes_sur	LITERAL1
+#define lines_on	LITERAL1
+#define colonnes_sur	LITERAL1
+#define columns_on	LITERAL1
 
 # Horloges
 action_et_arret	LITERAL1
