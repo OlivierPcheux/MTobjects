@@ -1,4 +1,4 @@
-// Version V1.0.6
+// Version V1.1.0
 
 #include <Arduino.h>
 #include <MTobjects.h> // V1.0.6 Voir http://arduino.dansetrad.fr/MTobjects
@@ -28,7 +28,7 @@
 //###########################################################################
 
 // Debug
-long debug;
+long MTdebug;
 // Boutons
 word bounce = 40 milli_secondes; // Temps minimum en ms pour le traitement des rebonds
 word doubleBounce = 250 milli_secondes; // Temps minimum en ms pour le traitement des doubles clics
@@ -325,6 +325,537 @@ MTslowObject::~MTslowObject()
 //###########################################################################
 //###########################################################################
 //####                                                                   ####
+//####                              Boutons                              ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+
+//###########################################################################
+//##                                MTbutton                               ##
+//###########################################################################
+
+//############################### Constructeur ##############################
+MTbutton::MTbutton(uint8_t pin, // Broche sur lequel est branché le bouton
+    void (*onSelectFunction)(void), // Pas d'action par défaut
+    void (*onUnselectFunction)(void), // Pas d'action par défaut
+    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+  : MTpin(pin), MTonSelectFunction(onSelectFunction), MTonUnselectFunction(onUnselectFunction),
+    MTrepos(repos), MTetat(repos)
+{
+  if (MTrepos) pinMode(MTpin, INPUT_PULLUP);
+}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTbutton::mediumAction(void)
+{
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+    MTtimeStartBounce = word(MTmillis());
+    if ((MTetat & 1) ^ MTrepos) MTetat |= 0x80; // Bouton appuyé, on mémorise
+    else MTetat |= 0x40; // Bouton relâché, on mémorise
+  }
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTbutton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Le bouton a été appuyé
+  {
+    MTetat &= 0x7F;
+    onSelect(); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
+  {
+    MTetat &= 0xBF;
+    onUnselect(); // Pour l'utilisateur
+    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+//###########################################################################
+//##                              MTlongButton                             ##
+//###########################################################################
+// MTlongButton fournit la gestion pour un bouton poussoir gérant l'appui
+// et l'appui long
+
+//############################### Constructeur ##############################
+MTlongButton::MTlongButton(uint8_t pin, // Broche sur lequel est branché le bouton
+    word longTime, // Temps pour avoir un appui long
+    void (*onLongSelectFunction)(void), // Pas d'action par défaut
+    void (*onSelectFunction)(void), // Pas d'action par défaut
+    void (*onUnselectFunction)(void), // Pas d'action par défaut
+    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+  : MTbutton(pin, onSelectFunction, onUnselectFunction, repos), MTlongTime(longTime), MTonLongSelectFunction(onLongSelectFunction)
+{}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+// void MTlongButton::mediumAction(void)
+
+  // bouton:       _________--_____________________---------------_________
+  // longTime:              <------->              <------->
+  // longSelect:   ________________________________________^_______________
+  // select:       _________^______________________^_______________________
+  // unselect:       _________^___________________________________^________
+
+void MTlongButton::mediumAction(void)
+{
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+	MTetat &= 0xDD; // On efface les infos sur les temps longs
+	MTtimeStartLong = MTtimeStartBounce = word(MTmillis());
+    if ((MTetat & 1) ^ MTrepos) MTetat |= 0x80; // Bouton appuyé, on mémorise
+    else MTetat |= 0x40; // Bouton relâché, on mémorise
+  }
+  if (((MTetat & 1) ^ MTrepos) && // Bouton appuyé
+    (word(MTmillis()) - MTtimeStartLong > MTlongTime) && // Et on a dépassé le temps long
+    ((MTetat & 2) == 0)) // Et on n'en a pas encore tenu compte
+    MTetat |= 0x22;	// Temps long, on mémorise
+}
+
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTlongButton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Le bouton a été appuyé
+  {
+    MTetat &= 0x7F;
+    onSelect(); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
+  {
+    MTetat &= 0xBF;
+    onUnselect(); // Pour l'utilisateur
+    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x20) > 0) // Le bouton a été appuyé longtemps
+  {
+    MTetat &= 0xDF;
+    onLongSelect(); // Pour l'utilisateur
+    if (MTonLongSelectFunction != PAS_D_ACTION) (*MTonLongSelectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+//###########################################################################
+//##                             MTdoubleButton                            ##
+//###########################################################################
+// MTdoubleButton fournit la gestion pour un bouton poussoir gérant le clic
+// et le double-clic
+
+//############################### Constructeur ##############################
+MTdoubleButton::MTdoubleButton(uint8_t pin, // Broche sur lequel est branché le bouton
+    void (*onDoubleSelectFunction)(void), // Pas d'action par défaut
+    void (*onSelectFunction)(void), // Pas d'action par défaut
+    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+  : MTbutton(pin, onSelectFunction, onDoubleSelectFunction, repos), MTarmed(0)
+{}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTdoubleButton::mediumAction(void)
+{
+  // bouton:       _________--___--__________________--_________
+  // doubleBounce:          <------->                <------->
+  // MTarmed:      _________-----____________________---------__
+  // select:       __________________________________________^__
+  // doubleSelect: ______________^______________________________
+
+  // Traitement d'un appui  
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+    MTtimeStartBounce = word(MTmillis());
+    if ((MTetat & 1) ^ MTrepos) // On vient d'appuyer sur le bouton
+    {{
+      if (MTarmed) // c'est le deuxième appui
+      {
+        MTarmed = false;
+        MTetat |= 0x80; // Double clic, on mémorise
+      }
+      else // On mémorise et on attend
+      {
+        MTarmed = true;
+        MTtimeStartDoubleBounce = millis();
+	  }
+    }}
+  }
+  // Dépassement du temps pendant lequel on peut voir un double clic
+  if (MTarmed && (word(MTmillis()) - MTtimeStartDoubleBounce > doubleBounce)) // On n'a pas vu le double clic
+  {
+    MTarmed = false;
+    MTetat |= 0x40; // Simple clic, on mémorise    
+  }
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTdoubleButton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Le bouton a été appuyé
+  {
+    MTetat &= 0x7F;
+    onDoubleSelect(); // Pour l'utilisateur
+    if (MTonDoubleSelectFunction != PAS_D_ACTION) (*MTonDoubleSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
+  {
+    MTetat &= 0xBF;
+    onSelect(); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+//###########################################################################
+//##                             MTtripleButton                            ##
+//###########################################################################
+// MTtripleButton fournit la gestion pour un bouton poussoir gérant le clic,
+// le double-clic et le triple-clic
+
+//############################### Constructeur ##############################
+MTtripleButton::MTtripleButton(uint8_t pin, // Broche sur lequel est branché le bouton
+    void (*onTipleSelectFunction)(void), // Pas d'action par défaut
+    void (*onDoubleSelectFunction)(void), // Pas d'action par défaut
+    void (*onSelectFunction)(void), // = PAS_D_ACTION, Pas d'action par défaut
+    boolean repos) // = HIGH si_non_appuye, État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+  : MTdoubleButton(pin, onDoubleSelectFunction, onSelectFunction, repos), MTonTripleSelectFunction(onTipleSelectFunction)
+{}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire
+void MTtripleButton::mediumAction(void)
+{
+  // bouton:       _________--___--___--___________--__--_________________--_________
+  // tripleBounce:          <----<------->         <---<------->          <------->
+  // MTarmed:      _________1111122222_____________1111222222222__________111111111__
+  // select:       _______________________________________________________________^__
+  // doubleSelect: ____________________________________________^_____________________
+  // tripleSelect: ___________________^______________________________________________
+
+  // Traitement d'un appui  
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+    MTtimeStartBounce = word(MTmillis());
+    if ((MTetat & 1) ^ MTrepos) // On vient d'appuyer sur le bouton
+    {{
+      if (MTarmed == 2) // c'est le troisième appui
+      {
+        MTarmed = 0;
+        MTetat |= 0x80; // Triple clic, on mémorise
+      }
+      else // On mémorise et on attend
+      {
+        MTarmed++;
+       MTtimeStartTripleBounce = millis();
+      }
+    }}
+  }
+  // Dépassement du temps pendant lequel on peut voir un double clic
+  if (MTarmed && (word(MTmillis()) - MTtimeStartTripleBounce > tripleBounce)) // On n'a pas vu le double clic
+  {{
+    if (MTarmed == 2)
+    {
+      MTarmed = 0;
+      MTetat |= 0x40; // Double clic, on mémorise    
+    }
+    else // MTarmed = 1
+    {
+      MTarmed = 0;
+      MTetat |= 0x20; // Simple clic, on mémorise   
+    }
+  }}
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTtripleButton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Triple clic mémorisé
+  {
+    MTetat &= 0x7F;
+    onTripleSelect(); // Pour l'utilisateur
+    if (MTonTripleSelectFunction != PAS_D_ACTION) (*MTonTripleSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Double clic mémorisé
+  {
+    MTetat &= 0xBF;
+    onDoubleSelect(); // Pour l'utilisateur
+    if (MTonDoubleSelectFunction != PAS_D_ACTION) (*MTonDoubleSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x20) > 0) // Simple clic mémorisé
+  {
+    MTetat &= 0xDF;
+    onSelect(); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+//###########################################################################
+//##                             MTcheckButton                             ##
+//###########################################################################
+// MTcheckButton fournit la gestion pour un interrupteur type va et vient, ou
+// case à cocher.
+
+
+//############################### Constructeur ##############################
+MTcheckButton::MTcheckButton(uint8_t pin, // Broche sur lequel est branché le bouton
+    void (*onSelectFunction)(void), // Pas d'action par défaut
+    void (*onUnselectFunction)(void), // Pas d'action par défaut
+    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+  : MTbutton(pin, onSelectFunction, onUnselectFunction, repos), MTstatus(0)
+{
+}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTcheckButton::mediumAction(void)
+{
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+    MTtimeStartBounce = word(MTmillis());
+    if (MTetat ^ MTrepos) // bouton appuyé
+    {
+      if (MTstatus >= 0) MTetat |= 0x80; // Bouton sélectionné, on mémorise
+      else MTetat |= 0x40; // Bouton désélectionné, on mémorise
+    }
+  }
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTcheckButton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Le bouton a été sélectionné
+  {
+    MTetat &= 0x7F;
+    MTstatus |= 0x80; // S'active
+    onSelect(); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Le bouton a été désélectionné
+  {
+    MTetat &= 0xBF;
+    MTstatus &= 0x7F; // Se désactive
+    onUnselect(); // Pour l'utilisateur
+    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+//###########################################################################
+//##                             MTradioButton                             ##
+//###########################################################################
+// MTradioButton fournit la gestion pour un interrupteur type choix unique:
+// la sélection d'un bouton désélectionne les autres boutons du même groupe
+
+
+//############################### _radioActif_ ##############################
+// Le tableau _radioActif_[groupe] indique quel est le bouton actif de groupe.
+// Il n'y a donc qu'un pointeur pour tous les instances d'un groupe
+MTradioButton *MTradioButton::_radioActif_[1 << RADIO_NB_BITS_GROUPE] = {NULL}; // Un seul pointeur pour tous sur l'élément actif
+
+
+//############################### Constructeur ##############################
+MTradioButton::MTradioButton(uint8_t pin, // Broche sur lequel est branché le bouton
+    void (*onSelectFunction)(void), // Pas d'action par défaut
+    void (*onUnselectFunction)(void), // Pas d'action par défaut
+    boolean repos, // = HIGH si_non_appuye, État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    byte valeur, // = 0, Laissé libre pour l'utilisateur
+    byte groupe) // = 0, Numéro du groupe
+  : MTcheckButton(pin, onSelectFunction, onUnselectFunction, repos)
+{
+    MTstatus = ((valeur << RADIO_NB_BITS_GROUPE) & 0x7F) // Chaque MTradioButton peut avoir une valeur
+             + (groupe & ((1 << RADIO_NB_BITS_GROUPE) - 1))
+             + 0; // bouton désactivé
+
+  // Pour le statut qui comporte 3 champs
+  // 1 si sélection           valeur                      groupe
+  // └-------------┴---------------------------┴----------------------------┘
+  //      1 bit     7-RADIO_NB_BITS_GROUPE bits   RADIO_NB_BITS_GROUPE bits
+  //
+}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTradioButton::mediumAction(void)
+{
+  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
+//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
+      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
+  {
+    MTetat ^= 1; // On change son état
+    if (((MTetat & 1) ^ MTrepos) // Bouton appuyé
+        &&  (MTstatus >= 0)) // Et non sélectionné
+      MTetat |= 0x80;
+  }
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTradioButton::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Le bouton a été sélectionné
+  {
+    if (_radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)] != NULL) _radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)]->MTetat |= 0x40; // Désactive le copain éventuel
+    _radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)] = this; // Autorise les copains à le demander
+  }
+  if ((MTetat & 0xC0) > 0) MTcheckButton::slowAction(); // Appel des fonctions utilisateur et maj de MTstatus
+}
+
+
+//############################## unselectMTradioButton ##############################
+// Désélectionne tous les boutons radios d'un groupe (en fait on n'est désélectionne qu'un seul!)
+void unselectMTradioButton(byte groupe) // = 0
+{
+  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
+  if (getMTradioButtonPointeur(groupe) != NULL)  MTradioButton::_radioActif_[groupe]->MTetat |= 0x40; // Désélection du bouton actif si il existe
+  MTradioButton::_radioActif_[groupe] = NULL; // Plus personne n'est actif
+}
+
+
+//############################## getMTradioButtonValeur #############################
+// Retourne la valeur du contrôle actif du groupe
+byte getMTradioButtonValeur(byte groupe) // = 0
+{
+  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
+  if (MTradioButton::_radioActif_[groupe] != NULL) return (MTradioButton::_radioActif_[groupe]->MTstatus & 0x7F) >> RADIO_NB_BITS_GROUPE;
+  else return 0x80; // Pas de contrôle radio sélectionné
+}
+
+//############################# getRadioPointeur ############################
+// Retourne l'adresse du contrôle actif
+MTradioButton *getMTradioButtonPointeur(byte groupe) // = 0
+{
+  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
+  return MTradioButton::_radioActif_[groupe];
+}
+
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
+//####                       Assemblages de boutons                      ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+//###########################################################################
+//##                                MTkeypad                               ##
+//###########################################################################
+
+//############################### Constructeur ##############################
+MTkeypad::MTkeypad(byte *pinLignes, // Broches des lignes du keypad
+    byte *pinColonnes, // Broches des colonnes du keypad
+    void (*onSelectFunction)(int8_t), // Pas d'action par défaut
+    void (*onUnselectFunction)(void)) // Pas d'action par défaut
+  : MTnbLignes(pinLignes[0]), MTpinLignes(pinLignes+1), 
+    MTnbColonnes(pinColonnes[0]), MTpinColonnes(pinColonnes+1),
+    MTonSelectFunction(onSelectFunction), MTonUnselectFunction(onUnselectFunction),
+    MTetat(0), MTtouche(-1)
+{
+  for (byte ligne=0; ligne<MTnbLignes; ligne++) // Lignes par défaut en sortie
+  {
+	digitalWrite(MTpinLignes[ligne], LOW); // Fait par l'initialisation, mais peut avoir été changé
+    pinMode(MTpinLignes[ligne], OUTPUT);
+  }
+  for (byte colonne=0; colonne<MTnbColonnes; colonne++) // Colonnes par défaut en pullup
+    pinMode(MTpinColonnes[colonne], INPUT_PULLUP);
+}	
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTkeypad::mediumAction(void)
+{
+  if (word(MTmillis()) - MTtimeStartBounce > bounce) // Si on a attendu la fin des rebonds
+  {
+    byte nouvelEtat = HIGH;
+    if ((MTetat & 1) == 0) // On est au repos, on attend un appui. les lignes sont en LOW
+    {
+      // Un touche est apuyée ou non?
+      for (byte colonne=0; colonne<MTnbColonnes; colonne++) // Les colonnes sont en pullup
+        nouvelEtat &= digitalRead(MTpinColonnes[colonne]); // Passe à LOW si une touche de la colonne correspondante est appuyée
+    }
+    if ((MTetat & 1) || (nouvelEtat == LOW)) // Avant ou après une touche est appuyée
+    {
+      // Recherche du bouton appuyé
+      int8_t nouvelleTouche = -1; // Pas de touche appuyée pour le moment
+      for (byte ligne=1; ligne<MTnbLignes; ligne++) pinMode(MTpinLignes[ligne], INPUT_PULLUP); // Toute la matrice en PULLUP
+      for (byte ligne=0; ligne<MTnbLignes; ligne++) // Scan des lignes une par une
+      {
+        pinMode(MTpinLignes[ligne], OUTPUT); // Passage de la ligne à LOW
+        digitalWrite(MTpinLignes[ligne], LOW);
+        for (byte colonne=0; colonne<MTnbColonnes; colonne++) // Scan des colonnes
+          if (digitalRead(MTpinColonnes[colonne]) == LOW) nouvelleTouche = ligne * MTnbColonnes + colonne; // N° de la touche
+        pinMode(MTpinLignes[ligne], INPUT_PULLUP); // Fin du scan de la ligne
+      }
+      if (MTtouche != nouvelleTouche) // Une nouvelle touche est appyée
+      {
+        MTtimeStartBounce = word(MTmillis()); 
+        MTtouche = nouvelleTouche; // On mémorise la touche
+        if (MTtouche >= 0) 
+          MTetat |= 0x81; // Bouton appuyé, on mémorise et <etat> passe à 1
+        else // Bouton relâché
+        {
+          for (byte ligne=0; ligne<MTnbLignes; ligne++) // Lignes par défaut en sortie
+          {
+            digitalWrite(MTpinLignes[ligne], LOW); // Fait par l'initialisation, mais peut avoir été changé
+            pinMode(MTpinLignes[ligne], OUTPUT);
+          }
+          MTetat &= 0xFE; // Passage de <etat> à 0
+          MTetat |= 0x40; // Bouton relâché, on mémorise
+        }
+      }
+	}
+  }
+}
+
+//################################ slowAction ###############################
+// Appelée régulièrement par le gestionnaire pour gérer les événements
+void MTkeypad::slowAction(void)
+{
+  if ((MTetat & 0x80) > 0) // Une touche a été appuyée
+  {
+    MTetat &= 0x7F;
+    onSelect(MTtouche); // Pour l'utilisateur
+    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(MTtouche); // Action possible de l'utilisateur
+  }
+  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
+  {
+    MTetat &= 0xBF;
+    onUnselect(); // Pour l'utilisateur
+    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
+  }
+}
+
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
 //####                              Horloges                             ####
 //####                                                                   ####
 //###########################################################################
@@ -427,369 +958,6 @@ void MTdoubleClock::start(void)
   MTwhatAction = true;
   MTtimeStart = MTmillis();
   MTactive = MT_ON;
-}
-
-
-
-//###########################################################################
-//###########################################################################
-//####                                                                   ####
-//####                              Boutons                              ####
-//####                                                                   ####
-//###########################################################################
-//###########################################################################
-
-
-//###########################################################################
-//##                                MTbutton                               ##
-//###########################################################################
-
-//############################### Constructeur ##############################
-MTbutton::MTbutton(uint8_t pin, // Broche sur lequel est branché le bouton
-    void (onSelectFunction)(void), // Pas d'action par défaut
-    void (onUnselectFunction)(void), // Pas d'action par défaut
-    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-  : MTpin(pin), MTonSelectFunction(onSelectFunction), MTonUnselectFunction(onUnselectFunction),
-    MTrepos(repos), MTetat(repos)
-{
-  if (MTrepos) pinMode(MTpin, INPUT_PULLUP);
-}
-
-//############################### mediumAction ##############################
-// Appelée régulièrement par le gestionnaire pour voir les changements
-void MTbutton::mediumAction(void)
-{
-  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
-//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
-      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
-  {
-    MTetat ^= 1; // On change son état
-    MTtimeStartBounce = word(MTmillis());
-    if ((MTetat & 1) ^ MTrepos) MTetat |= 0x80; // Bouton appuyé, on mémorise
-    else MTetat |= 0x40; // Bouton relâché, on mémorise
-  }
-}
-
-//################################ slowAction ###############################
-// Appelée régulièrement par le gestionnaire pour gérer les événements
-void MTbutton::slowAction(void)
-{
-  if ((MTetat & 0x80) > 0) // Le bouton a été appuyé
-  {
-    MTetat &= 0x7F;
-    onSelect(); // Pour l'utilisateur
-    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
-  }
-  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
-  {
-    MTetat &= 0xBF;
-    onUnselect(); // Pour l'utilisateur
-    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
-  }
-}
-
-
-//###########################################################################
-//##                             MTdoubleButton                            ##
-//###########################################################################
-// MTdoubleButton fournit la gestion pour un bouton poussoir gérant le clic
-// et le double-clic
-
-//############################### Constructeur ##############################
-MTdoubleButton::MTdoubleButton(uint8_t pin, // Broche sur lequel est branché le bouton
-    void (onDoubleSelectFunction)(void), // Pas d'action par défaut
-    void (onSelectFunction)(void), // Pas d'action par défaut
-    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-  : MTbutton(pin, onSelectFunction, onDoubleSelectFunction, repos), MTarmed(0)
-{}
-
-//############################### mediumAction ##############################
-// Appelée régulièrement par le gestionnaire pour voir les changements
-void MTdoubleButton::mediumAction(void)
-{
-  // bouton:       _________--___--__________________--_________
-  // doubleBounce:          <------->                <------->
-  // MTarmed:      _________-----____________________---------__
-  // select:       __________________________________________^__
-  // doubleSelect: ______________^______________________________
-
-  // Traitement d'un appui  
-  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
-//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
-      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
-  {
-    MTetat ^= 1; // On change son état
-    MTtimeStartBounce = word(MTmillis());
-    if ((MTetat & 1) ^ MTrepos) // On vient d'appuyer sur le bouton
-    {{
-      if (MTarmed) // c'est le deuxième appui
-      {
-        MTarmed = false;
-        MTetat |= 0x80; // Double clic, on mémorise
-      }
-      else // On mémorise et on attend
-      {
-        MTarmed = true;
-        MTtimeStartDoubleBounce = millis();
-	  }
-    }}
-  }
-  // Dépassement du temps pendant lequel on peut voir un double clic
-  if (MTarmed && (word(MTmillis()) - MTtimeStartDoubleBounce > doubleBounce)) // On n'a pas vu le double clic
-  {
-    MTarmed = false;
-    MTetat |= 0x40; // Simple clic, on mémorise    
-  }
-}
-
-//################################ slowAction ###############################
-// Appelée régulièrement par le gestionnaire pour gérer les événements
-void MTdoubleButton::slowAction(void)
-{
-  if ((MTetat & 0x80) > 0) // Le bouton a été appuyé
-  {
-    MTetat &= 0x7F;
-    onDoubleSelect(); // Pour l'utilisateur
-    if (MTonDoubleSelectFunction != PAS_D_ACTION) (*MTonDoubleSelectFunction)(); // Action possible de l'utilisateur
-  }
-  if ((MTetat & 0x40) > 0) // Le bouton a été relâché
-  {
-    MTetat &= 0xBF;
-    onSelect(); // Pour l'utilisateur
-    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
-  }
-}
-
-
-//###########################################################################
-//##                             MTtripleButton                            ##
-//###########################################################################
-// MTtripleButton fournit la gestion pour un bouton poussoir gérant le clic,
-// le double-clic et le triple-clic
-
-//############################### Constructeur ##############################
-MTtripleButton::MTtripleButton(uint8_t pin, // Broche sur lequel est branché le bouton
-    void (onTipleSelectFunction)(void), // = PAS_D_ACTION, Pas d'action par défaut
-    void (onDoubleSelectFunction)(void), // = PAS_D_ACTION, Pas d'action par défaut
-    void (onSelectFunction)(void), // = PAS_D_ACTION, Pas d'action par défaut
-    boolean repos) // = HIGH si_non_appuye, État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-  : MTdoubleButton(pin, onDoubleSelectFunction, onSelectFunction, repos), MTonTripleSelectFunction(onTipleSelectFunction)
-{}
-
-//############################### mediumAction ##############################
-// Appelée régulièrement par le gestionnaire
-void MTtripleButton::mediumAction(void)
-{
-  // bouton:       _________--___--___--___________--__--_________________--_________
-  // tripleBounce:          <----<------->         <---<------->          <------->
-  // MTarmed:      _________1111122222_____________1111222222222__________111111111__
-  // select:       _______________________________________________________________^__
-  // doubleSelect: ____________________________________________^_____________________
-  // tripleSelect: ___________________^______________________________________________
-
-  // Traitement d'un appui  
-  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
-//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
-      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
-  {
-    MTetat ^= 1; // On change son état
-    MTtimeStartBounce = word(MTmillis());
-    if ((MTetat & 1) ^ MTrepos) // On vient d'appuyer sur le bouton
-    {{
-      if (MTarmed == 2) // c'est le troisième appui
-      {
-        MTarmed = 0;
-        MTetat |= 0x80; // Triple clic, on mémorise
-      }
-      else // On mémorise et on attend
-      {
-        MTarmed++;
-       MTtimeStartTripleBounce = millis();
-      }
-    }}
-  }
-  // Dépassement du temps pendant lequel on peut voir un double clic
-  if (MTarmed && (word(MTmillis()) - MTtimeStartTripleBounce > tripleBounce)) // On n'a pas vu le double clic
-  {{
-    if (MTarmed == 2)
-    {
-      MTarmed = 0;
-      MTetat |= 0x40; // Double clic, on mémorise    
-    }
-    else // MTarmed = 1
-    {
-      MTarmed = 0;
-      MTetat |= 0x20; // Simple clic, on mémorise   
-    }
-  }}
-}
-
-//################################ slowAction ###############################
-// Appelée régulièrement par le gestionnaire pour gérer les événements
-void MTtripleButton::slowAction(void)
-{
-  if ((MTetat & 0x80) > 0) // Triple clic mémorisé
-  {
-    MTetat &= 0x7F;
-    onTripleSelect(); // Pour l'utilisateur
-    if (MTonTripleSelectFunction != PAS_D_ACTION) (*MTonTripleSelectFunction)(); // Action possible de l'utilisateur
-  }
-  if ((MTetat & 0x40) > 0) // Double clic mémorisé
-  {
-    MTetat &= 0xBF;
-    onDoubleSelect(); // Pour l'utilisateur
-    if (MTonDoubleSelectFunction != PAS_D_ACTION) (*MTonDoubleSelectFunction)(); // Action possible de l'utilisateur
-  }
-  if ((MTetat & 0x20) > 0) // Simple clic mémorisé
-  {
-    MTetat &= 0xDF;
-    onSelect(); // Pour l'utilisateur
-    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
-  }
-}
-
-
-//###########################################################################
-//##                             MTcheckButton                             ##
-//###########################################################################
-// MTcheckButton fournit la gestion pour un interrupteur type va et vient, ou
-// case à cocher.
-
-
-//############################### Constructeur ##############################
-MTcheckButton::MTcheckButton(uint8_t pin, // Broche sur lequel est branché le bouton
-    void (onSelectFunction)(void), // Pas d'action par défaut
-    void (onUnselectFunction)(void), // Pas d'action par défaut
-    boolean repos) // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-  : MTbutton(pin, onSelectFunction, onUnselectFunction, repos), MTstatus(0)
-{
-}
-
-//############################### mediumAction ##############################
-// Appelée régulièrement par le gestionnaire pour voir les changements
-void MTcheckButton::mediumAction(void)
-{
-  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
-//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
-      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
-  {
-    MTetat ^= 1; // On change son état
-    MTtimeStartBounce = word(MTmillis());
-    if (MTetat ^ MTrepos) // bouton appuyé
-    {
-      if (MTstatus >= 0) MTetat |= 0x80; // Bouton sélectionné, on mémorise
-      else MTetat |= 0x40; // Bouton désélectionné, on mémorise
-    }
-  }
-}
-
-//################################ slowAction ###############################
-// Appelée régulièrement par le gestionnaire pour gérer les événements
-void MTcheckButton::slowAction(void)
-{
-  if ((MTetat & 0x80) > 0) // Le bouton a été sélectionné
-  {
-    MTetat &= 0x7F;
-    MTstatus |= 0x80; // S'active
-    onSelect(); // Pour l'utilisateur
-    if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(); // Action possible de l'utilisateur
-  }
-  if ((MTetat & 0x40) > 0) // Le bouton a été désélectionné
-  {
-    MTetat &= 0xBF;
-    MTstatus &= 0x7F; // Se désactive
-    onUnselect(); // Pour l'utilisateur
-    if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
-  }
-}
-
-
-//###########################################################################
-//##                             MTradioButton                             ##
-//###########################################################################
-// MTradioButton fournit la gestion pour un interrupteur type choix unique:
-// la sélection d'un bouton désélectionne les autres boutons du même groupe
-
-
-//############################### _radioActif_ ##############################
-// Le tableau _radioActif_[groupe] indique quel est le bouton actif de groupe.
-// Il n'y a donc qu'un pointeur pour tous les instances d'un groupe
-MTradioButton *MTradioButton::_radioActif_[1 << RADIO_NB_BITS_GROUPE] = {NULL}; // Un seul pointeur pour tous sur l'élément actif
-
-
-//############################### Constructeur ##############################
-MTradioButton::MTradioButton(uint8_t pin, // Broche sur lequel est branché le bouton
-    void (onSelectFunction)(void), // = PAS_D_ACTION, Pas d'action par défaut
-    void (onUnselectFunction)(void), // PAS_D_ACTION, Pas d'action par défaut
-    boolean repos, // = HIGH si_non_appuye, État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-    byte valeur, // = 0, Laissé libre pour l'utilisateur
-    byte groupe) // = 0, Numéro du groupe
-  : MTcheckButton(pin, onSelectFunction, onUnselectFunction, repos)
-{
-    MTstatus = ((valeur << RADIO_NB_BITS_GROUPE) & 0x7F) // Chaque MTradioButton peut avoir une valeur
-             + (groupe & ((1 << RADIO_NB_BITS_GROUPE) - 1))
-             + 0; // bouton désactivé
-
-  // Pour le statut qui comporte 3 champs
-  // 1 si sélection           valeur                      groupe
-  // └-------------┴---------------------------┴----------------------------┘
-  //      1 bit     7-RADIO_NB_BITS_GROUPE bits   RADIO_NB_BITS_GROUPE bits
-  //
-}
-
-//############################### mediumAction ##############################
-// Appelée régulièrement par le gestionnaire pour voir les changements
-void MTradioButton::mediumAction(void)
-{
-  if (((MTetat & 1) != MTdigitalRead(MTpin)) && // Il a changé d'état
-//  if (((MTetat & 1) != digitalRead(MTpin)) && // Équivalent mais désactive le timer si il y en a un
-      (word(MTmillis()) - MTtimeStartBounce > bounce)) // Et on a attendu la fin des rebonds
-  {
-    MTetat ^= 1; // On change son état
-    if (((MTetat & 1) ^ MTrepos) // Bouton appuyé
-        &&  (MTstatus >= 0)) // Et non sélectionné
-      MTetat |= 0x80;
-  }
-}
-
-//################################ slowAction ###############################
-// Appelée régulièrement par le gestionnaire pour gérer les événements
-void MTradioButton::slowAction(void)
-{
-  if ((MTetat & 0x80) > 0) // Le bouton a été sélectionné
-  {
-    if (_radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)] != NULL) _radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)]->MTetat |= 0x40; // Désactive le copain éventuel
-    _radioActif_[MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1)] = this; // Autorise les copains à le demander
-  }
-  if ((MTetat & 0xC0) > 0) MTcheckButton::slowAction(); // Appel des fonctions utilisateur et maj de MTstatus
-}
-
-
-//############################## unselectMTradioButton ##############################
-// Désélectionne tous les boutons radios d'un groupe (en fait on n'est désélectionne qu'un seul!)
-void unselectMTradioButton(byte groupe) // = 0
-{
-  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
-  if (getMTradioButtonPointeur(groupe) != NULL)  MTradioButton::_radioActif_[groupe]->MTetat |= 0x40; // Désélection du bouton actif si il existe
-  MTradioButton::_radioActif_[groupe] = NULL; // Plus personne n'est actif
-}
-
-
-//############################## getMTradioButtonValeur #############################
-// Retourne la valeur du contrôle actif du groupe
-byte getMTradioButtonValeur(byte groupe) // = 0
-{
-  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
-  if (MTradioButton::_radioActif_[groupe] != NULL) return (MTradioButton::_radioActif_[groupe]->MTstatus & 0x7F) >> RADIO_NB_BITS_GROUPE;
-  else return 0x80; // Pas de contrôle radio sélectionné
-}
-
-//############################# getRadioPointeur ############################
-// Retourne l'adresse du contrôle actif
-MTradioButton *getMTradioButtonPointeur(byte groupe) // = 0
-{
-  groupe &= (1 << RADIO_NB_BITS_GROUPE) - 1; // Évite les débordements
-  return MTradioButton::_radioActif_[groupe];
 }
 
 
