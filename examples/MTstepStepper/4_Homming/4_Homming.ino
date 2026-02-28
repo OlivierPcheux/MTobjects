@@ -1,4 +1,4 @@
-// Version 1.0.6
+// Version 1.1.0
 
 //###########################################################################
 //###########################################################################
@@ -11,48 +11,48 @@
 //###########################################################################
 //###########################################################################
 
-// This program initializes the position of a stepper, then has done
-// a tour in one direction one tour in the other
+// Ce programme initialise la position d'un moteur pas à pas, puis fait faire
+// un tour dans un sens un tour dans l'autre à un pas à pas
 
-#include MTobjects.h // V1.0.6 See http://arduino.dansetrad.fr/MTobjects
+#include <MTobjects.h> // V1.1.0 Voir http://arduino.dansetrad.fr/MTobjects
 
-const float speed = 1 RPS;
-const uint8_t eos = A0; // End of stroke; closed at rest
-boolean initializing = false; // Before homming, true after
+const float vitesse = 1 RPS;
+const uint8_t fdc = A0; // Fin de course; fermé au repos 
+boolean initialise = false; // Avant homming, true après
 
 
-// Part making one tour in one direction, one tour in the other
-void inversion(void); // Pre-define
+// Partie faisant faire un tout dans un sens, un tour dans l'autre
+void inversion(void); // Pré-définition
 
-MTstepStepper Stepper(pin_Step 2, pin_Dir 5, pin_EN 8, accelerations_of 16*200 step_or_micro_step, 16 step_or_micro_step, vitesse, DEFAULT_SENSE, inversion);
+MTstepStepper Stepper(pin_Step 2, pin_Dir 5, pin_EN 8, accelerations_sur 16*200 pas_ou_micro_pas, 16 pas_ou_micro_pas, vitesse, SENS_PAR_DEFAUT, inversion);
 
-void inversion(void) // Sens inversion
+void inversion(void) // Inversion du sens
 {
-  if (initializing)
+  if (initialise)
   {
-    delay(1000); // Wait a bit before leaving in the other direction
-    if (Stepper.getPosition() == 0) // If it is in the reference position
-      Stepper.move(Stepper.getMicroStepsPerTurn()); // We take a turn
-    else Stepper.moveTo(); //  Otherwise we come back in the reference position
+    delay(1000); // Attendre un peu avant de repartir dans l'autre sens
+    if (Stepper.getPosition() == 0) // Si il est en position de référence
+      Stepper.move(Stepper.getMicroStepsPerTurn()); // On fait un tour
+    else Stepper.moveTo(); // Sinon on revient en position de référence
   }
 }
 
-// Initializing
+// Initialisation
 void setup()
 {
-  // initializing end of stroke
-  pinMode(eos, INPUT_PULLUP); // Between eos and Gnd
+  // Initialisation du fin de course
+  pinMode(fdc, INPUT_PULLUP); // Interrupteur entre fdc et Gnd
 
   // Mise à l'origine
-  Stepper.setSpeed(speed / 10); // Doucement pendant la mise en référence
-  Stepper.move(-CONTINUE); // Gently during reference
-  while (!digitalRead(eos)); // Waiting for the original position
-  Stepper.stop(); // We are at the origin; We stop
-  Stepper.setOrigin(); // Locate
-  initializing = true; // Allow normal operation
+  Stepper.setSpeed(vitesse / 10); // Doucement pendant la mise en référence
+  Stepper.move(-CONTINUE); // Retour vers l'origine
+  while (!digitalRead(fdc)); // Attente de la position d'origine
+  Stepper.stop(); // On est à l'origine; on s'arrête
+  Stepper.setOrigin(); // Repérer la position
+  initialise = true; // Permettre le fonctionnement normal
 
-  // Normal cycle
-  Stepper.setSpeed(speed); // Resumption of normal speed to work
+  // Cycle normal
+  Stepper.setSpeed(vitesse); // Reprise de la vitesse normale pour travailler
   inversion();
 }
 

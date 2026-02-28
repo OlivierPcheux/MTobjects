@@ -13,7 +13,8 @@
 
 
 // Ce programme va simuler un choix MW-LW-FM. On choisit la gamme par des
-// boutons câblés sur A0, A1, et A2. La console nous indique les changements 
+// boutons câblés sur A0, A1, et A2. La console nous indique les changements
+// On va utiliser une classe dérivée de MTradioButton
 
 #include <MTobjects.h> // V1.1.0 Voir http://arduino.dansetrad.fr/MTobjects
 
@@ -21,49 +22,33 @@ const uint8_t PIN_BUTTON_MW = A0; // Bouton câblé entre GND et A0
 const uint8_t PIN_BUTTON_LW = A1; // Bouton câblé entre GND et A1
 const uint8_t PIN_BUTTON_FM = A2; // Bouton câblé entre GND et A2
 
-
-//Définition du bouton MW
-void choixMW(void)
+// Définition d'une nouvelle classe qui surcharge onSelect et onUnselect
+class MonBouton: public MTradioButton
 {
-  Serial.println("On vient de choisir MW"); // Appelée si on appuie sur MW
-}
-
-void choixMWfini(void)
-{
-  Serial.println("On vient d'annuler MW"); // Appelée si on appuie sur LW ou FM
-}
-
-MTradioButton BoutonMW(PIN_BUTTON_MW, choixMW, choixMWfini, HIGH si_non_appuye, RADIO_BUTTON_0);
-
-
-
-//Définition du bouton LW
-void choixLW(void)
-{
-  Serial.println("On vient de choisir LW");
-}
-
-void choixLWfini(void)
-{
-  Serial.println("On vient d'annuler LW");
-}
-
-MTradioButton BoutonLW(PIN_BUTTON_LW, choixLW, choixLWfini, HIGH si_non_appuye, RADIO_BUTTON_1);
+ public:
+  MonBouton (uint8_t pin, String p_nom, byte valeur) // Nouveau constructeur
+    :MTradioButton(pin, PAS_D_ACTION, PAS_D_ACTION, HIGH si_non_appuye, valeur), nom(p_nom)
+    {};
+ private:
+  String nom; // Nom qui sera affiché sur la voie série
+  virtual void onSelect(void) // Fonction à surcharger qui informe la sélection
+  {
+    Serial.print("On vient de choisir ");
+    Serial.println(nom);
+  }
+  virtual void onUnselect(void) // Fonction à surcharger qui informe la désélection
+  {
+    Serial.print("On vient d'annuler ");
+    Serial.println(nom);
+  }
+};
 
 
 
-//Définition du bouton FM
-void choixFM(void)
-{
-  Serial.println("On vient de choisir FM");
-}
-
-void choixFMfini(void)
-{
-  Serial.println("On vient d'annuler FM");
-}
-
-MTradioButton BoutonFM(PIN_BUTTON_FM, choixFM, choixFMfini, HIGH si_non_appuye, RADIO_BUTTON_2);
+//Définition des boutons
+MonBouton BoutonMW(PIN_BUTTON_MW, "MW", RADIO_BUTTON_0);
+MonBouton BoutonLW(PIN_BUTTON_LW, "LW", RADIO_BUTTON_1);
+MonBouton BoutonFM(PIN_BUTTON_FM, "FM", RADIO_BUTTON_2);
 
 
 
