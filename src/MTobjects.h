@@ -1,4 +1,4 @@
-// Version V1.0.6
+// Version V1.1.0
 
 #ifndef _MTobjects_
 #define _MTobjects_
@@ -80,6 +80,10 @@
 // Boutons
 #define si_non_appuye
 #define if_not_pressed
+#define lignes_sur
+#define lines_on
+#define colonnes_sur
+#define columns_on
 // Horloges
 #define action_et_arret
 #define action_and_stop
@@ -201,7 +205,7 @@
 //###########################################################################
 
 // Debug
-extern long debug;
+extern long MTdebug;
 // Boutons
 extern word bounce; // Temps minimum en ms pour le traitement des rebonds
 extern word doubleBounce; // Temps minimum en ms pour le traitement des rebonds
@@ -332,6 +336,299 @@ class MTslowObject
 //###########################################################################
 //###########################################################################
 //####                                                                   ####
+//####                              Boutons                              ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+
+//###########################################################################
+//##                                MTbutton                               ##
+//###########################################################################
+// MTbutton fournit la gestion pour un bouton poussoir
+
+class MTbutton: public MTslowObject, public MTmediumObject
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTbutton(uint8_t pin, // Broche sur lequel est branché le bouton
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+    inline boolean getSelect(void) { return (MTetat & 1) ^ MTrepos; } // true si appuyé
+  protected:
+    // -------- Attributs protégés --------
+    uint8_t MTpin; // Broche sur lequel est branché le bouton
+    void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+    uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    volatile byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
+    word MTtimeStartBounce; // Comptage en millisecondes
+    // -------- Méthodes protégées ---------
+    virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Pour onSelect, onUnselect
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+//###########################################################################
+//##                              MTlongButton                             ##
+//###########################################################################
+// MTlongButton fournit la gestion pour un bouton poussoir gérant l'appui
+// et le l'appui long
+
+class MTlongButton: public MTbutton
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTlongButton(uint8_t pin, // Broche sur lequel est branché le bouton
+      word longTime, // Temps pour avoir un appui long
+      void (*onLongSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    inline void setOnLongSelectFunction(void (*onLongSelectFunction)(void) = PAS_D_ACTION) { MTonLongSelectFunction = MTonLongSelectFunction; }
+    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    // inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+    // inline boolean getSelect(void) { return (MTetat & 1) ^ MTrepos; } // true si appuyé
+    inline boolean getLongSelect(void) { return MTetat & 2; } // true si appuyé depuis longtemps
+  protected:
+    // -------- Attributs protégés --------
+    // uint8_t MTpin; // Broche sur lequel est branché le bouton
+    word MTlongTime; // Temps caractéristique, en millisecondes
+    void (*MTonLongSelectFunction)(void); // Fonction extérieure gérant l'appui long
+    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    // void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+    // word MTtimeStartBounce; // Comptage en millisecondes
+    word MTtimeStartLong; // Comptage en millisecondes
+    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    // volatile byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40/0x20 si on n'a pas encore tenu compte du changement 
+    // -------- Méthode protégée ---------
+    virtual void onLongSelect(void) {} // Pour le gestionnaire utilisateur
+    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    // virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Appel du gestionnaire toutes les BASE_DE_TEMPS
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+
+///###########################################################################
+//##                             MTdoubleButton                            ##
+//###########################################################################
+// MTdoubleButton fournit la gestion pour un bouton poussoir gérant le clic
+// et le double-clic
+
+
+
+#define onDoubleSelect onUnselect
+#define onDoubleSelectFunction onUnselectFunction // Unselect n'est pas employé
+#define MTonDoubleSelectFunction MTonUnselectFunction
+#define setOnDoubleSelectFunction setOnUnselectFunction
+class MTdoubleButton: public MTbutton
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTdoubleButton(uint8_t pin, // Broche sur lequel est branché le bouton
+      void (*onDoubleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    // inline void setOnDoubleSelectFunction(void (*onDoubleSelectFunction)(void) = PAS_D_ACTION) { MTonDoubleSelectFunction = MTonDoubleSelectFunction; }
+    // inline boolean getSelect(void) { return MTetat ^ MTrepos; } // true si appuyé
+  protected:
+    // -------- Attributs protégés --------
+    // uint8_t MTpin; // Broche sur lequel est branché le bouton
+    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    // void (*MTonDoubleSelectFunction)(void); // Fonction extérieure gérant le double appui
+    // word MTtimeStartBounce; // Comptage en millisecondes
+    word MTtimeStartDoubleBounce; // Comptage en millisecondes
+    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    // volatile byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
+    byte MTarmed; // Nombre de clics déjà vus 0 ou 1
+    // -------- Méthode protégée ---------
+    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    // virtual void onDoubleSelect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Appel du gestionnaire toutes les BASE_DE_TEMPS
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+
+//###########################################################################
+//##                             MTtripleButton                            ##
+//###########################################################################
+// MTtripleButton fournit la gestion pour un bouton poussoir gérant le clic,
+// le double-clic et le triple-clic
+
+#define MTtimeStartTripleBounce MTtimeStartDoubleBounce
+class MTtripleButton: public MTdoubleButton
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTtripleButton(uint8_t pin, // Broche sur lequel est branché le bouton
+      void (*onTipleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onDoubleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    // inline void setOnDoubleSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION)
+    //    { MTonDoubleSelectFunction = MTonDoubleSelectFunction; }
+    inline void setOnTripleSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION)
+          { MTonTripleSelectFunction = MTonTripleSelectFunction; }
+    //inline boolean getSelect(void) { return MTetat ^ MTrepos; } // true si appuyé
+  protected:
+    // -------- Attributs protégés --------
+    //uint8_t MTpin; // Broche sur lequel est branché le bouton
+    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    // void (*MTonDoubleSelectFunction)(void); // Fonction extérieure gérant le double appui
+    void (*MTonTripleSelectFunction)(void); // Fonction extérieure gérant le triple appui
+    //word MTtimeStartBounce; // Comptage en millisecondes
+    //word MTtimeStartTripleBounce; // Comptage en millisecondes entre deux appuis
+    //uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    // byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40/0x20 si on n'a pas encore tenu compte du changement 
+    //byte MTarmed; // Nombre de clics déjà vus
+    // -------- Méthodes protégées --------
+    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    // virtual void onDoubleSelect(void) {} // Pour le gestionnaire utilisateur
+    virtual void onTripleSelect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Gestion des événements
+    virtual void mediumAction(void);  // Pour onSelect, onDoubleSelect, onTripleSelect
+};
+
+
+//###########################################################################
+//##                             MTcheckButton                             ##
+//###########################################################################
+// MTcheckButton fournit la gestion pour un interrupteur type va et vient, ou
+// case à cocher.
+
+class MTcheckButton: public MTbutton
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTcheckButton(uint8_t pin, // Broche sur lequel est branché le bouton
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    // inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+    inline boolean getSelect(void) { return (MTstatus < 0); } // true si mémoire actve
+    inline void select(void) { MTetat |= 0x80; } // Active ce bouton
+    inline void unselect(void) { MTetat |= 0x40; } // Désactive ce bouton
+  protected:
+    // -------- Attributs protégés --------
+    // uint8_t MTpin; // Broche sur lequel est branché le bouton
+    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    // void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+    // word MTtimeStartBounce; // Comptage en millisecondes
+    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    // boolean MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
+    volatile char MTstatus; // Mémoire 0x80 allumé / 0x00 éteint
+    // -------- Méthodes protégées --------
+    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    // virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Pour la gestion des appuis
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+
+//###########################################################################
+//##                             MTradioButton                             ##
+//###########################################################################
+// MTradioButton fournit la gestion pour un interrupteur type choix unique:
+// la sélection d'un bouton désélectionne les autres boutons du même groupe
+
+class MTradioButton: public MTcheckButton
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTradioButton(uint8_t pin, // Broche sur lequel est branché le bouton
+      void (*onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
+      boolean repos = HIGH si_non_appuye, // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
+      byte valeur = 0, // Laissé libre pour l'utilisateur
+      byte groupe = 0); // Numéro du groupe
+    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    // inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+    // inline boolean getSelect(void) { return (MTstatus < 0); } // true si mémoire actve
+    // inline void select(void) { MTetat |= 0x80; } // Active ce bouton
+    // inline void unselect(void) { MTetat |= 0x40; } // Désactive ce bouton
+    inline byte getValeur(void) { return (MTstatus & 0x7F) >> RADIO_NB_BITS_GROUPE; } // Retourne la valeur du bouton
+    inline byte getGroupe(void) { return MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1); } // Retourne le groupe du bouton
+    friend byte getMTradioButtonValeur(byte groupe); // Retourne la valeur du contrôle actif du groupe
+    friend MTradioButton *getMTradioButtonPointeur(byte groupe); // Retourne l'adresse du contrôle actif
+    friend void unselectMTradioButton(byte groupe); // Désélectionne tous les boutons radios d'un groupe
+  protected:
+    // -------- Attributs protégés --------
+    static MTradioButton *_radioActif_[1 << RADIO_NB_BITS_GROUPE]; // Pointeurs sur l'élément actif
+    // uint8_t MTpin; // Broche sur lequel est branché le bouton
+    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
+    // void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+    // word MTtimeStartBounce; // Comptage en millisecondes
+    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
+    // boolean MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
+    // char MTstatus; // Sélectionné ou pas, valeur et groupe
+    // -------- Méthodes protégées --------
+    virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
+    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Pour la gestion des appuis
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+byte getMTradioButtonValeur(byte groupe = 0); // Retourne la valeur du contrôle actif du groupe
+MTradioButton *getMTradioButtonPointeur(byte groupe = 0); // Retourne l'adresse du contrôle actif
+void unselectMTradioButton(byte groupe = 0); // Désélectionne tous les boutons radios d'un groupe
+#define getMTradioButtonValue getMTradioButtonValeur
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
+//####                       Assemblages de boutons                      ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+//###########################################################################
+//##                                MTkeypad                               ##
+//###########################################################################
+// MTkeypad fournit la gestion pour un keypad ordinaire (matrice carrée)
+
+class MTkeypad: public MTslowObject, public MTmediumObject
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTkeypad(byte *pinLignes, // Broches des lignes du keypad
+      byte *pinColonnes, // Broches des colonnes du keypad
+      void (*onSelectFunction)(int8_t) = PAS_D_ACTION, // Pas d'action par défaut
+      void (*onUnselectFunction)(void) = PAS_D_ACTION); // Pas d'action par défaut
+    inline void setOnSelectFunction(void (*onSelectFunction)(int8_t) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+    inline int8_t getKey(void) { return MTtouche; } // Touche appuyée, -1 si aucune
+  protected:
+    // -------- Attributs protégés --------
+	byte MTnbLignes; // Nombre de lignes
+    byte *MTpinLignes; // Tableau des broches des lignes du keypad
+	byte MTnbColonnes; // Nombre de colonnes
+    byte *MTpinColonnes; // Tableau des colonnes des lignes du keypad
+    void (*MTonSelectFunction)(int8_t); // Fonction extérieure gérant l'appui
+    void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+    volatile byte MTetat; // État actuel 0 si pas de touche appuyée, 1 sinon, +0x80/0x40 si on n'a pas encore tenu compte du changement 
+    volatile int8_t MTtouche; // Touche appuyée, -1 si aucune
+    word MTtimeStartBounce; // Comptage en millisecondes
+    // -------- Méthodes protégées ---------
+    virtual void onSelect(int8_t) {} // Pour le gestionnaire utilisateur
+    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Pour onSelect, onUnselect
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
 //####                              Horloges                             ####
 //####                                                                   ####
 //###########################################################################
@@ -415,216 +712,6 @@ class MTdoubleClock: public MTclock
     virtual void slowAction(void);  // Pour onTime1 et onTime2
 };
 
-
-
-//###########################################################################
-//###########################################################################
-//####                                                                   ####
-//####                              Boutons                              ####
-//####                                                                   ####
-//###########################################################################
-//###########################################################################
-
-
-//###########################################################################
-//##                                MTbutton                               ##
-//###########################################################################
-// MTbutton fournit la gestion pour un bouton poussoir
-
-class MTbutton: public MTslowObject, public MTmediumObject
-{
-  public:
-    // -------- Méthodes publiques --------
-    MTbutton(uint8_t pin, // Broche sur lequel est branché le bouton
-      void (onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-    inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION)
-      { MTonSelectFunction = onSelectFunction; }
-    inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION)
-      { MTonUnselectFunction = onUnselectFunction; }
-    inline boolean getSelect(void) { return (MTetat & 1) ^ MTrepos; } // true si appuyé
-  protected:
-    // -------- Attributs protégés --------
-    uint8_t MTpin; // Broche sur lequel est branché le bouton
-    void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
-    void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
-    uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
-    volatile byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
-    word MTtimeStartBounce; // Comptage en millisecondes
-    // -------- Méthodes protégées ---------
-    virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
-    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
-    virtual void slowAction(void);  // Pour onSelect, onUnselect
-    virtual void mediumAction(void);  // Pour onSelect, onUnselect
-};
-
-//###########################################################################
-//##                             MTdoubleButton                            ##
-//###########################################################################
-// MTdoubleButton fournit la gestion pour un bouton poussoir gérant le clic
-// et le double-clic
-
-
-
-#define onDoubleSelect onUnselect
-#define onDoubleSelectFunction onUnselectFunction // Unselect n'est pas employé
-#define MTonDoubleSelectFunction MTonUnselectFunction
-#define setOnDoubleSelectFunction setOnUnselectFunction
-class MTdoubleButton: public MTbutton
-{
-  public:
-    // -------- Méthodes publiques --------
-    MTdoubleButton(uint8_t pin, // Broche sur lequel est branché le bouton
-      void (onDoubleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
-    // inline void setOnDoubleSelectFunction(void (*onDoubleSelectFunction)(void) = PAS_D_ACTION) { MTonDoubleSelectFunction = MTonDoubleSelectFunction; }
-    // inline boolean getSelect(void) { return MTetat ^ MTrepos; } // true si appuyé
-  protected:
-    // -------- Attributs protégés --------
-    // uint8_t MTpin; // Broche sur lequel est branché le bouton
-    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
-    // void (*MTonDoubleSelectFunction)(void); // Fonction extérieure gérant le double appui
-    // word MTtimeStartBounce; // Comptage en millisecondes
-    word MTtimeStartDoubleBounce; // Comptage en millisecondes
-    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
-    // volatile byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
-    byte MTarmed; // Nombre de clics déjà vus 0 ou 1
-    // -------- Méthode protégée ---------
-    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
-    // virtual void onDoubleSelect(void) {} // Pour le gestionnaire utilisateur
-    virtual void slowAction(void);  // Appel du gestionnaire toutes les BASE_DE_TEMPS
-    virtual void mediumAction(void);  // Pour onSelect, onUnselect
-};
-
-
-//###########################################################################
-//##                             MTtripleButton                            ##
-//###########################################################################
-// MTtripleButton fournit la gestion pour un bouton poussoir gérant le clic,
-// le double-clic et le triple-clic
-
-#define MTtimeStartTripleBounce MTtimeStartDoubleBounce
-class MTtripleButton: public MTdoubleButton
-{
-  public:
-    // -------- Méthodes publiques --------
-    MTtripleButton(uint8_t pin, // Broche sur lequel est branché le bouton
-      void (onTipleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onDoubleSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
-    // inline void setOnDoubleSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION)
-    //    { MTonDoubleSelectFunction = MTonDoubleSelectFunction; }
-    inline void setOnTripleSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION)
-          { MTonTripleSelectFunction = MTonTripleSelectFunction; }
-    //inline boolean getSelect(void) { return MTetat ^ MTrepos; } // true si appuyé
-  protected:
-    // -------- Attributs protégés --------
-    //uint8_t MTpin; // Broche sur lequel est branché le bouton
-    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
-    // void (*MTonDoubleSelectFunction)(void); // Fonction extérieure gérant le double appui
-    void (*MTonTripleSelectFunction)(void); // Fonction extérieure gérant le triple appui
-    //word MTtimeStartBounce; // Comptage en millisecondes
-    //word MTtimeStartTripleBounce; // Comptage en millisecondes entre deux appuis
-    //uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
-    // byte MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40/0x20 si on n'a pas encore tenu compte du changement 
-    //byte MTarmed; // Nombre de clics déjà vus
-    // -------- Méthodes protégées --------
-    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
-    // virtual void onDoubleSelect(void) {} // Pour le gestionnaire utilisateur
-    virtual void onTripleSelect(void) {} // Pour le gestionnaire utilisateur
-    virtual void slowAction(void);  // Gestion des événements
-    virtual void mediumAction(void);  // Pour onSelect, onDoubleSelect, onTripleSelect
-};
-
-
-//###########################################################################
-//##                             MTcheckButton                             ##
-//###########################################################################
-// MTcheckButton fournit la gestion pour un interrupteur type va et vient, ou
-// case à cocher.
-
-class MTcheckButton: public MTbutton
-{
-  public:
-    // -------- Méthodes publiques --------
-    MTcheckButton(uint8_t pin, // Broche sur lequel est branché le bouton
-      void (onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      boolean repos = HIGH si_non_appuye); // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
-    // inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
-    inline boolean getSelect(void) { return (MTstatus < 0); } // true si mémoire actve
-    inline void select(void) { MTetat |= 0x80; } // Active ce bouton
-    inline void unselect(void) { MTetat |= 0x40; } // Désactive ce bouton
-  protected:
-    // -------- Attributs protégés --------
-    // uint8_t MTpin; // Broche sur lequel est branché le bouton
-    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
-    // void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
-    // word MTtimeStartBounce; // Comptage en millisecondes
-    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
-    // boolean MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
-    volatile char MTstatus; // Mémoire 0x80 allumé / 0x00 éteint
-    // -------- Méthodes protégées --------
-    // virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
-    // virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
-    virtual void slowAction(void);  // Pour la gestion des appuis
-    virtual void mediumAction(void);  // Pour onSelect, onUnselect
-};
-
-
-//###########################################################################
-//##                             MTradioButton                             ##
-//###########################################################################
-// MTradioButton fournit la gestion pour un interrupteur type choix unique:
-// la sélection d'un bouton désélectionne les autres boutons du même groupe
-
-class MTradioButton: public MTcheckButton
-{
-  public:
-    // -------- Méthodes publiques --------
-    MTradioButton(uint8_t pin, // Broche sur lequel est branché le bouton
-      void (onSelectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      void (onUnselectFunction)(void) = PAS_D_ACTION, // Pas d'action par défaut
-      boolean repos = HIGH si_non_appuye, // État de la broche, bouton au repos. INPUT_PULLUP si HIGH
-      byte valeur = 0, // Laissé libre pour l'utilisateur
-      byte groupe = 0); // Numéro du groupe
-    // inline void setOnSelectFunction(void (*onSelectFunction)(void) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
-    // inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
-    // inline boolean getSelect(void) { return (MTstatus < 0); } // true si mémoire actve
-    // inline void select(void) { MTetat |= 0x80; } // Active ce bouton
-    // inline void unselect(void) { MTetat |= 0x40; } // Désactive ce bouton
-    inline byte getValeur(void) { return (MTstatus & 0x7F) >> RADIO_NB_BITS_GROUPE; } // Retourne la valeur du bouton
-    inline byte getGroupe(void) { return MTstatus & ((1 << RADIO_NB_BITS_GROUPE) - 1); } // Retourne le groupe du bouton
-    friend byte getMTradioButtonValeur(byte groupe); // Retourne la valeur du contrôle actif du groupe
-    friend MTradioButton *getMTradioButtonPointeur(byte groupe); // Retourne l'adresse du contrôle actif
-    friend void unselectMTradioButton(byte groupe); // Désélectionne tous les boutons radios d'un groupe
-  protected:
-    // -------- Attributs protégés --------
-    static MTradioButton *_radioActif_[1 << RADIO_NB_BITS_GROUPE]; // Pointeurs sur l'élément actif
-    // uint8_t MTpin; // Broche sur lequel est branché le bouton
-    // void (*MTonSelectFunction)(void); // Fonction extérieure gérant l'appui
-    // void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
-    // word MTtimeStartBounce; // Comptage en millisecondes
-    // uint8_t MTrepos; // État du bouton au repos (HIGH ou LOW)
-    // boolean MTetat; // État actuel 0 pour LOW, 1 pour HIGH, +0x80/0x40 si on n'a pas encore tenu compte du changement 
-    // char MTstatus; // Sélectionné ou pas, valeur et groupe
-    // -------- Méthodes protégées --------
-    virtual void onSelect(void) {} // Pour le gestionnaire utilisateur
-    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
-    virtual void slowAction(void);  // Pour la gestion des appuis
-    virtual void mediumAction(void);  // Pour onSelect, onUnselect
-};
-
-byte getMTradioButtonValeur(byte groupe = 0); // Retourne la valeur du contrôle actif du groupe
-MTradioButton *getMTradioButtonPointeur(byte groupe = 0); // Retourne l'adresse du contrôle actif
-void unselectMTradioButton(byte groupe = 0); // Désélectionne tous les boutons radios d'un groupe
-#define getMTradioButtonValue getMTradioButtonValeur
 
 
 //###########################################################################
