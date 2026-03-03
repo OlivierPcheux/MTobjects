@@ -1,4 +1,4 @@
-// Version V1.1.0
+// Version V1.1.1
 
 #ifndef _MTobjects_
 #define _MTobjects_
@@ -585,7 +585,7 @@ void unselectMTradioButton(byte groupe = 0); // Désélectionne tous les boutons
 //###########################################################################
 //###########################################################################
 //####                                                                   ####
-//####                       Assemblages de boutons                      ####
+//####             Assemblages de boutons, lecture numérique             ####
 //####                                                                   ####
 //###########################################################################
 //###########################################################################
@@ -619,6 +619,54 @@ class MTkeypad: public MTslowObject, public MTmediumObject
     word MTtimeStartBounce; // Comptage en millisecondes
     // -------- Méthodes protégées ---------
     virtual void onSelect(int8_t) {} // Pour le gestionnaire utilisateur
+    virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
+    virtual void slowAction(void);  // Pour onSelect, onUnselect
+    virtual void mediumAction(void);  // Pour onSelect, onUnselect
+};
+
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
+//####                         lecture analogique                        ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+//###########################################################################
+//##                            MTanalogButtons                            ##
+//###########################################################################
+// MTanalogButtons permet de lire une structure de boutons avec un analogRead
+
+class MTanalogButtons: public MTslowObject, public MTmediumObject
+{
+  public:
+    // -------- Méthodes publiques --------
+    MTanalogButtons(uint8_t pin, // Broche sur laquel est utilisé le CAN
+      word *seuils, // Tableau contenant les seuils
+      void (*onSelectFunction)(byte key) = PAS_D_ACTION, // Si une touche est appuyée
+      void (*onUnselectFunction)(void) = PAS_D_ACTION); // Si les touches sont relâchées
+    inline void setOnSelectFunction(void (*onSelectFunction)(byte) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
+    inline void setOnUnselectFunction(void (*onUnselectFunction)(void) = PAS_D_ACTION) { MTonUnselectFunction = onUnselectFunction; }
+	inline word getCAN(void) { return MTvaleurLue; } // Fixe l'erreur maximale
+	inline void setError(word error = 0) { MTerror = error; } // Fixe l'erreur maximale
+	inline word getError(void) { return MTerror; } // Fixe l'erreur maximale
+	inline byte getKey(void) { return MTkey; } // Fixe l'erreur maximale
+  protected:
+    // -------- Attributs protégés --------
+    uint8_t MTpin; // Broche sur lequel est branché le bouton
+    word *MTseuils; // Tableau contenant les seuils
+	boolean MTcroissant; // true si la table des seuils est croissante, false si décroissante
+    void (*MTonSelectFunction)(byte key); // Fonction extérieure gérant l'appui
+    void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
+	word MTvaleurLue; // Valeur numérique du convertisseur
+	word MToldValeurLue; // Lecture précédente
+	word MTerror; // Erreur tolérée
+	byte MTkey; // N° de la touche
+	byte MToldKey; // Ancien N°
+    // -------- Méthodes protégées ---------
+    virtual void onSelect(byte) {} // Pour le gestionnaire utilisateur
     virtual void onUnselect(void) {} // Pour le gestionnaire utilisateur
     virtual void slowAction(void);  // Pour onSelect, onUnselect
     virtual void mediumAction(void);  // Pour onSelect, onUnselect

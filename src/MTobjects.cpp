@@ -1,4 +1,4 @@
-// Version V1.1.0
+// Version V1.1.1
 
 #include <Arduino.h>
 #include <MTobjects.h> // V1.0.6 Voir http://arduino.dansetrad.fr/MTobjects
@@ -758,7 +758,7 @@ MTradioButton *getMTradioButtonPointeur(byte groupe) // = 0
 //###########################################################################
 //###########################################################################
 //####                                                                   ####
-//####                       Assemblages de boutons                      ####
+//####             Assemblages de boutons, lecture numérique             ####
 //####                                                                   ####
 //###########################################################################
 //###########################################################################
@@ -849,6 +849,67 @@ void MTkeypad::slowAction(void)
     onUnselect(); // Pour l'utilisateur
     if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
   }
+}
+
+
+
+//###########################################################################
+//###########################################################################
+//####                                                                   ####
+//####                         lecture analogique                        ####
+//####                                                                   ####
+//###########################################################################
+//###########################################################################
+
+//###########################################################################
+//##                            MTanalogButtons                            ##
+//###########################################################################
+// MTanalogButtons permet de lire une structure de boutons avec un analogRead
+
+//############################### Constructeur ##############################
+MTanalogButtons::MTanalogButtons(uint8_t pin, // Broche sur laquel est utilisé le CAN
+    word *seuils, // Tableau contenant les seuils
+    void (*onSelectFunction)(byte), // Si une touche est appuyée
+    void (*onUnselectFunction)(void)) // Si les touches sont relâchées
+	  : MTpin(pin), MTseuils(seuils), 
+        MTonSelectFunction(onSelectFunction), MTonUnselectFunction(onUnselectFunction),
+        MTerror(0), MTkey(0), MToldKey(0)
+{
+  pinMode(MTpin, INPUT); // Au cas ou l'initialisation est faite après
+  MTcroissant = (MTseuils[0] < MTseuils[1]);  // true si la table des seuils est croissante, false si décroissante
+}
+
+//############################### mediumAction ##############################
+// Appelée régulièrement par le gestionnaire pour voir les changements
+void MTanalogButtons::mediumAction(void)
+{
+  MToldValeurLue = MTvaleurLue; // Sauvegarde de la mesure précédente du CAN
+  MTvaleurLue = analogRead(MTpin); // Nouvelle lecture
+  if (abs (MTvaleurLue - MToldValeurLue) <= MTerror) // Il faut lire deux valeurs identiques (double lecteure par sécurité)
+  {
+    MTkey = 0; // Parcours de la table
+    if (MTcroissant) while (MTseuils[MTkey] < MTvaleurLue) MTkey++;  // MTkey = 0 si aucune touche n'est appuyée
+	else while (MTseuils[MTkey] > MTvaleurLue) MTkey++;
+  }
+}
+  
+//################################ slowAction ###############################
+void MTanalogButtons::slowAction(void)
+{
+  if (MTkey != MToldKey) // Il y a changement
+  {
+    if (MTkey > 0) // Une nouvelle touche est détectée
+	{
+      onSelect(MTkey); // Pour l'utilisateur
+      if (MTonSelectFunction != PAS_D_ACTION) (*MTonSelectFunction)(MTkey); // Action possible de l'utilisateur
+    }
+    else // Les boutons ont été relâchés
+    {
+      onUnselect(); // Pour l'utilisateur
+      if (MTonUnselectFunction != PAS_D_ACTION) (*MTonUnselectFunction)(); // Action possible de l'utilisateur
+    }
+  }
+  MToldKey = MTkey;
 }
 
 
