@@ -1,3 +1,6 @@
+Version française plus bas.
+
+
 Library MTobjects
 =================
 
@@ -11,6 +14,7 @@ Use only timer 0 but completely.
 - buttons plugged directly on an input, preferably between the pin and GND.
     Bell type, Two-Way Switch, radio button, double or triple clicks
     recognized.
+- keypads
 - objects managing time, to have regular calls or not, unique or repetitive
 - hard PWM on specific pins, with the possibility of easily choosing the period
     and the durations of impulses
@@ -41,11 +45,89 @@ The use of objects often does not require code in setup() and in loop() and the
 union of several codes operating separated is easy because it is often enough
 to put them to end to end.
 
+
+## Example
+// This program makes the LED_BUILTIN blink on a Mega
+#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
+MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
+void setup(){}
+void loop(){}
+
+
 ## Need help?
 In addition to the examples of the library, documentation is at:
 http://arduino.dansetrad.fr/en/MTobjects/accueil.php (in English)
 http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
 I am regularly on the Arduino French forum under the name of @vileroi.
+I am also notified of a post which contains "@Vileroy"
 Otherwise a personal email (Olivier@Dansetrad.fr) allows me to join.
+
+Olivier
+
+&nbsp;
+
+&nbsp;
+
+<hr>
+
+Bibliothèque MTobjects
+======================
+
+
+## Limites
+Fonctionne uniquement sur les AVR (Nano, Uno, Mega) à cause de la gestion par interruptions.
+Utilise uniquement le timer 0 mais complètement.
+
+
+## Objets adressés
+- des boutons branchés directement sur une entrée, de préférence entre une pin et GND. 
+Emule poussoir, va et vient, bouton radio, double ou triple clics reconnus.
+- keypads
+- des objets gérant le temps, pour avoir des appels réguliers ou non, uniques ou répétitifs
+- PWM hard sur des broches spécifiques, avec possibilité de choisir facilement la période 
+et les durées des impulsions
+- PWM soft sur toutes les broches, avec possibilité de choisir facilement les périodes et 
+périodes d'impulsion
+- des servomoteurs ordinaires avec gestion automatique de la vitesse de déplacement. En ajoutant un 
+quatrième fil, possibilité de mise sous tension sans mouvement
+- moteurs pas à pas avec une gestion de 2 ou 4 bobines ou avec Step/Dir permettant 
+vous d'exécuter plus de 10 000 pas ou micro-pas par seconde. Les moteurs peuvent 
+avoir des accélérations
+
+
+## Utilitaire
+Les boutons, horloges, PWM, servomoteurs, moteurs pas à pas utilisent entièrement et uniquement le
+timer 0 pour avoir une programmation apparemment indépendante. Permet par exemple de
+exécuter un stepper pendant un "delay()" d'une autre tâche. Vous pouvez utiliser la gestion
+sans utiliser "loop()", ce qui facilite l'ajout de fonctions non fournis initialement. "loop()"
+peut être bloquant.
+
+
+## Par rapport à d'autres bibliothèques
+La gestion se fait par interruption et ne nécessite pas de fonction MTobjects.run()
+pour exécuter le code. loop() peut bloquer. C'est un peu comme si chaque objet était
+géré en multitâche.
+Les objets s'inclinent d'eux-mêmes avec leur déclaration. Il n'y a donc pas
+fonction comme Button.begin().
+L'utilisation d'objets ne nécessite souvent pas de code dans setup() et dans loop() et le
+l'union de plusieurs codes fonctionnant séparément est aisée car elle suffit souvent
+pour les mettre bout à bout.
+
+
+## Exemple
+// Ce programme fait clignoter le LED_BUILTIN sur un Mega
+#include <MTobjects.h> // V1.0.6 Voir http://arduino.dansetrad.fr/en/MTobjects
+#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
+MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
+void setup(){}
+void loop(){}
+
+
+## Besoin d'aide ?
+En plus des exemples de la bibliothèque, la documentation se trouve à l'adresse suivante :
+http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
+http://arduino.dansetrad.fr/en/MTobjects/accueil.php (en anglais)
+Je suis régulièrement sur le forum Arduino français sous le nom de @vileroi.
+Sinon un email personnel (Olivier@Dansetrad.fr) me permet d'être joint
 
 Olivier
