@@ -79,7 +79,7 @@ Fonctionne uniquement sur les AVR (Nano, Uno, Mega) à cause de la gestion par i
 Utilise uniquement le timer 0 mais complètement.
 
 
-## Objets adressés
+## Objets utiles
 - des boutons branchés directement sur une entrée, de préférence entre une pin et GND. 
 Emule poussoir, va et vient, bouton radio, double ou triple clics reconnus.
 - keypads
@@ -95,7 +95,7 @@ vous d'exécuter plus de 10 000 pas ou micro-pas par seconde. Les moteurs peuven
 avoir des accélérations
 
 
-## Utilitaire
+## Intérêt
 Les boutons, horloges, PWM, servomoteurs, moteurs pas à pas utilisent entièrement et uniquement le
 timer 0 pour avoir une programmation apparemment indépendante. Permet par exemple de
 exécuter un stepper pendant un "delay()" d'une autre tâche. Vous pouvez utiliser la gestion
