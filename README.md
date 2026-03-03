@@ -47,11 +47,14 @@ to put them to end to end.
 
 
 ## Example
-// This program makes the LED_BUILTIN blink on a Mega
-#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
+<pre>// This program makes the LED_BUILTIN blink on a Mega
+    
+#include <MTobjects.h> // V1.1.1 See http://arduino.dansetrad.fr/en/MTobjects
+    
 MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
+    
 void setup(){}
-void loop(){}
+void loop(){}</pre>
 
 
 ## Need help?
@@ -115,12 +118,14 @@ pour les mettre bout à bout.
 
 
 ## Exemple
-// Ce programme fait clignoter le LED_BUILTIN sur un Mega
-#include <MTobjects.h> // V1.0.6 Voir http://arduino.dansetrad.fr/en/MTobjects
-#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
+<pre>// Ce programme fait clignoter la LED_BUILTIN sur une Mega
+    
+#include <MTobjects.h> // V1.1.1 Voir http://arduino.dansetrad.fr/MTobjects
+    
 MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
+    
 void setup(){}
-void loop(){}
+void loop(){}</pre>
 
 
 ## Besoin d'aide ?
