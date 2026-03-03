@@ -59,8 +59,7 @@ void loop(){}</pre>
 
 ## Need help?
 In addition to the examples of the library, documentation is at:
-http://arduino.dansetrad.fr/en/MTobjects/accueil.php (in English)
-http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
+http://arduino.dansetrad.fr/en/MTobjects/accueil.php .
 I am regularly on the Arduino French forum under the name of @vileroi.
 I am also notified of a post which contains "@Vileroy"
 Otherwise a personal email (Olivier@Dansetrad.fr) allows me to join.
@@ -130,8 +129,7 @@ void loop(){}</pre>
 
 ## Besoin d'aide ?
 En plus des exemples de la bibliothèque, la documentation se trouve à l'adresse suivante :
-http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
-http://arduino.dansetrad.fr/en/MTobjects/accueil.php (en anglais)
+http://arduino.dansetrad.fr/MTobjects/accueil.php .
 Je suis régulièrement sur le forum Arduino français sous le nom de @vileroi.
 Sinon un email personnel (Olivier@Dansetrad.fr) me permet d'être joint
 
