@@ -13,10 +13,10 @@
 
 // Ce programme vérifie qu'une lecture analogique sur une autre broche
 // analogique ne perturbe pas la mesure
-// Comme on utilise un seul CAN avec un multplexeur, il faut vérifier qu'en
+// Comme on utilise un seul CAN avec un multiplexeur, il faut vérifier qu'en
 // passant d'une broche à l'autre, on arrive bien à lire
 //
-// Ici, on va lire un keypad avec la broche A5 et metre la broche A0 à 5V.
+// Ici, on va lire un keypad avec la broche A5 et mettre la broche A0 à 5V.
 // Comme on a deux MTanalogButtons, on va lire alternativement A5 et A0
 // Avant la lecture des boutons, on lira donc un 5V.
 
