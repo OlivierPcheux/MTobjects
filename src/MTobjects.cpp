@@ -768,8 +768,8 @@ MTradioButton *getMTradioButtonPointeur(byte groupe) // = 0
 //###########################################################################
 
 //############################### Constructeur ##############################
-MTkeypad::MTkeypad(byte *pinLignes, // Broches des lignes du keypad
-    byte *pinColonnes, // Broches des colonnes du keypad
+MTkeypad::MTkeypad(const byte *pinLignes, // Broches des lignes du keypad
+    const byte *pinColonnes, // Broches des colonnes du keypad
     void (*onSelectFunction)(int8_t), // Pas d'action par défaut
     void (*onUnselectFunction)(void)) // Pas d'action par défaut
   : MTnbLignes(pinLignes[0]), MTpinLignes(pinLignes+1), 
@@ -868,10 +868,10 @@ void MTkeypad::slowAction(void)
 
 //############################### Constructeur ##############################
 MTanalogButtons::MTanalogButtons(uint8_t pin, // Broche sur laquel est utilisé le CAN
-    word *seuils, // Tableau contenant les seuils
+    const word *SEUILS, // Tableau contenant les seuils
     void (*onSelectFunction)(byte), // Si une touche est appuyée
     void (*onUnselectFunction)(void)) // Si les touches sont relâchées
-	  : MTpin(pin), MTseuils(seuils), 
+	  : MTpin(pin), MTseuils(SEUILS), 
         MTonSelectFunction(onSelectFunction), MTonUnselectFunction(onUnselectFunction),
         MTerror(0), MTkey(0), MToldKey(0)
 {

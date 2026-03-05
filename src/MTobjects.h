@@ -599,8 +599,8 @@ class MTkeypad: public MTslowObject, public MTmediumObject
 {
   public:
     // -------- Méthodes publiques --------
-    MTkeypad(byte *pinLignes, // Broches des lignes du keypad
-      byte *pinColonnes, // Broches des colonnes du keypad
+    MTkeypad(const byte *pinLignes, // Broches des lignes du keypad
+      const byte *pinColonnes, // Broches des colonnes du keypad
       void (*onSelectFunction)(int8_t) = PAS_D_ACTION, // Pas d'action par défaut
       void (*onUnselectFunction)(void) = PAS_D_ACTION); // Pas d'action par défaut
     inline void setOnSelectFunction(void (*onSelectFunction)(int8_t) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
@@ -608,10 +608,10 @@ class MTkeypad: public MTslowObject, public MTmediumObject
     inline int8_t getKey(void) { return MTtouche; } // Touche appuyée, -1 si aucune
   protected:
     // -------- Attributs protégés --------
-	byte MTnbLignes; // Nombre de lignes
-    byte *MTpinLignes; // Tableau des broches des lignes du keypad
-	byte MTnbColonnes; // Nombre de colonnes
-    byte *MTpinColonnes; // Tableau des colonnes des lignes du keypad
+	const byte MTnbLignes; // Nombre de lignes
+    const byte *MTpinLignes; // Tableau des broches des lignes du keypad
+	const byte MTnbColonnes; // Nombre de colonnes
+    const byte *MTpinColonnes; // Tableau des colonnes des lignes du keypad
     void (*MTonSelectFunction)(int8_t); // Fonction extérieure gérant l'appui
     void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
     volatile byte MTetat; // État actuel 0 si pas de touche appuyée, 1 sinon, +0x80/0x40 si on n'a pas encore tenu compte du changement 
@@ -644,7 +644,7 @@ class MTanalogButtons: public MTslowObject, public MTmediumObject
   public:
     // -------- Méthodes publiques --------
     MTanalogButtons(uint8_t pin, // Broche sur laquel est utilisé le CAN
-      word *seuils, // Tableau contenant les seuils
+      const word *SEUILS, // Tableau contenant les seuils
       void (*onSelectFunction)(byte key) = PAS_D_ACTION, // Si une touche est appuyée
       void (*onUnselectFunction)(void) = PAS_D_ACTION); // Si les touches sont relâchées
     inline void setOnSelectFunction(void (*onSelectFunction)(byte) = PAS_D_ACTION) { MTonSelectFunction = onSelectFunction; }
@@ -656,7 +656,7 @@ class MTanalogButtons: public MTslowObject, public MTmediumObject
   protected:
     // -------- Attributs protégés --------
     uint8_t MTpin; // Broche sur lequel est branché le bouton
-    word *MTseuils; // Tableau contenant les seuils
+    const word *MTseuils; // Tableau contenant les seuils
 	boolean MTcroissant; // true si la table des seuils est croissante, false si décroissante
     void (*MTonSelectFunction)(byte key); // Fonction extérieure gérant l'appui
     void (*MTonUnselectFunction)(void); // Fonction extérieure gérant le relâchement
