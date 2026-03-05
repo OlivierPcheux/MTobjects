@@ -14,7 +14,7 @@ Use only timer 0 but completely.
 - buttons plugged directly on an input, preferably between the pin and GND.
     Bell type, Two-Way Switch, radio button, double or triple clicks
     recognized.
-- keypads
+- keypads (digital or analog)
 - objects managing time, to have regular calls or not, unique or repetitive
 - hard PWM on specific pins, with the possibility of easily choosing the period
     and the durations of impulses
@@ -47,33 +47,26 @@ to put them to end to end.
 
 
 ## Example
-<pre>// This program makes the LED_BUILTIN blink on a Mega
-    
-#include <MTobjects.h> // V1.1.1 See http://arduino.dansetrad.fr/en/MTobjects
-    
+// This program makes the LED_BUILTIN blink on a Mega
+#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
 MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
-    
 void setup(){}
-void loop(){}</pre>
+void loop(){}
 
 
 ## Need help?
 In addition to the examples of the library, documentation is at:
-http://arduino.dansetrad.fr/en/MTobjects/accueil.php .
+http://arduino.dansetrad.fr/en/MTobjects/accueil.php (in English)
+http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
 I am regularly on the Arduino French forum under the name of @vileroi.
 I am also notified of a post which contains "@Vileroy"
 Otherwise a personal email (Olivier@Dansetrad.fr) allows me to join.
 
 Olivier
 
-&nbsp;
 
-&nbsp;
-
-<hr>
-
-Bibliothèque MTobjects
-======================
+Objets MT de la bibliothèque
+=================
 
 
 ## Limites
@@ -81,10 +74,10 @@ Fonctionne uniquement sur les AVR (Nano, Uno, Mega) à cause de la gestion par i
 Utilise uniquement le timer 0 mais complètement.
 
 
-## Objets utiles
+## Objets adressés
 - des boutons branchés directement sur une entrée, de préférence entre une pin et GND. 
 Emule poussoir, va et vient, bouton radio, double ou triple clics reconnus.
-- keypads
+- keypads (numériques ou analogiques)
 - des objets gérant le temps, pour avoir des appels réguliers ou non, uniques ou répétitifs
 - PWM hard sur des broches spécifiques, avec possibilité de choisir facilement la période 
 et les durées des impulsions
@@ -97,7 +90,7 @@ vous d'exécuter plus de 10 000 pas ou micro-pas par seconde. Les moteurs peuven
 avoir des accélérations
 
 
-## Intérêt
+## Utilitaire
 Les boutons, horloges, PWM, servomoteurs, moteurs pas à pas utilisent entièrement et uniquement le
 timer 0 pour avoir une programmation apparemment indépendante. Permet par exemple de
 exécuter un stepper pendant un "delay()" d'une autre tâche. Vous pouvez utiliser la gestion
@@ -117,19 +110,18 @@ pour les mettre bout à bout.
 
 
 ## Exemple
-<pre>// Ce programme fait clignoter la LED_BUILTIN sur une Mega
-    
-#include <MTobjects.h> // V1.1.1 Voir http://arduino.dansetrad.fr/MTobjects
-    
+// Ce programme fait clignoter le LED_BUILTIN sur un Mega
+#include <MTobjects.h> // V1.0.6 Voir http://arduino.dansetrad.fr/en/MTobjects
+#include <MTobjects.h> // V1.0.6 See http://arduino.dansetrad.fr/en/MTobjects
 MThardPWM Blink(LED_BUILTIN, inpulses_width 500000 micro_seconds, periods_width 1000000 micro_seconds);
-    
 void setup(){}
-void loop(){}</pre>
+void loop(){}
 
 
 ## Besoin d'aide ?
 En plus des exemples de la bibliothèque, la documentation se trouve à l'adresse suivante :
-http://arduino.dansetrad.fr/MTobjects/accueil.php .
+http://arduino.dansetrad.fr/MTobjects/accueil.php (en français)
+http://arduino.dansetrad.fr/en/MTobjects/accueil.php (en anglais)
 Je suis régulièrement sur le forum Arduino français sous le nom de @vileroi.
 Sinon un email personnel (Olivier@Dansetrad.fr) me permet d'être joint
 
