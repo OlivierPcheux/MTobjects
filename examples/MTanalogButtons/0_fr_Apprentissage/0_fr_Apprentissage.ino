@@ -36,7 +36,7 @@
 // *************************** Mémorisation des valeurs du CAN pour tous les boutons
 byte lecture[128]; // Contiendra les valeurs possibles du CAN pour tous les boutons   
 
-inline void ecrire(word valeur) // Enregitre que l'on a vu la valeur passée en argument (0 à 1023)
+inline void ecrire(word valeur) // Enregistre que l'on a vu la valeur passée en argument (0 à 1023)
 {
   lecture[valeur/8] = bitSet(lecture[valeur/8], valeur%8);
 }
@@ -60,8 +60,8 @@ boolean pasPremiereVirgule = false;
 
 void setup()
 {
-
-  // *************************** Initilalisations
+	
+  // *************************** Initialisations
   Serial.begin(BAUDS); // Régler aussi la console à BAUDS bauds!
   analogReference(REFERENCE); // Permet de choisir la référence de tension
   Serial.println(F("/*\nAppuyez sur toutes les touches, une par une\n"));
@@ -110,7 +110,7 @@ void setup()
 
 
   // *************************** On compte le nombre de boutons. 
-  // C'est le nobre d'intervalle de la table qui contionnent les 0. Les 1 indiquent un bouton
+  // C'est le nombre d'intervalle de la table qui contiennent que des 0. Les 1 indiquent un bouton
   while (indexDebut < 1024)
   {
     while (!lire(indexDebut)) indexDebut++; // On se place sur la première valeur 1
@@ -119,13 +119,13 @@ void setup()
   }
 
 
-  // *************************** Affichagne un nombre de boutons sur la console
+  // *************************** Affichage un nombre de boutons sur la console
   Serial.print(F("\nJ'ai vu "));
   Serial.print(--nbBoutons);
   Serial.print(F(" boutons\n*/\n\n"));
 
 
-  // *************************** On fait maintenent l'affichage du programme de test
+  // *************************** On fait maintenant l'affichage du programme de test
   // Commentaires du départ, début commun
   Serial.print(F("// Ce programme teste la lecture de l'ensemble de boutons avec MTanalogButtons\n\n"
     "#include <MTobjects.h> // V1.1.1 Voir http://arduino.dansetrad.fr/MTobjects\n\n"
