@@ -38,9 +38,9 @@ const word THRESHOLDS_TABLE[] = {942, 838, 797, 709, 618, 571, 471, 369, 316, 20
 //   7  8  9
 //   *  0  #
 
-const char keys[] = { // Match for display 
-    '.', // Corresponds to no support 
-    '#','0','*', // Key # returns 1... 
+const char keys[] = { // Match for display
+    '.', // Corresponds to no support
+    '#','0','*', // Key # returns 1...
     '9','8','7',
     '6','5','4',
     '3','2','1',
@@ -57,5 +57,5 @@ void setup()
 void loop()
 {
   Serial.println(Keypad.getKey()); // Displays the press number or -1 otherwise
-  delay(1000); // To slow down the display
+  delay(200); // To slow down the display
 }

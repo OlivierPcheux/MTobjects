@@ -73,7 +73,7 @@ void relache1(void) // Appelé quand on relâche toutes les touches
   Serial.println("  relache1");
 }
 
-void relache2(void) // Appelé quand on relache toutes les touches
+void relache2(void) // Appelé quand on relâche toutes les touches
 {
   Serial.println("  relache2");
 }

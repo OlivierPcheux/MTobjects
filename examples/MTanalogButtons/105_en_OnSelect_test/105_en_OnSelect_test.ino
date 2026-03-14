@@ -38,9 +38,9 @@ const word THRESHOLDS_TABLE[] = {942, 838, 797, 709, 618, 571, 471, 369, 316, 20
 //   7  8  9
 //   *  0  #
 
-const char keys[] = { // Match for display 
-    'X', // Corresponds to no support 
-    '#','0','*', // Key # returns 1... 
+const char keys[] = { // Match for display
+    'X', // Corresponds to no support
+    '#','0','*', // Key # returns 1...
     '9','8','7',
     '6','5','4',
     '3','2','1',
@@ -55,9 +55,9 @@ class Keyboard: public MTanalogButtons
     :MTanalogButtons(pin, THRESHOLDS)
     {};
  private:
-  virtual void onSelect(byte touche) // Overload function which informs one key press
+  virtual void onSelect(byte key) // Overload function which informs one key press
   {
-    Serial.print(keys[touche]); // Character pressed
+    Serial.print(keys[key]); // Character pressed
   }
   virtual void onUnselect(void) // Overload function which informs the release
   {

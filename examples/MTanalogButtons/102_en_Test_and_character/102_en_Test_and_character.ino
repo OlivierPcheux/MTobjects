@@ -39,9 +39,9 @@ const word THRESHOLDS_TABLE[] = {942, 838, 797, 709, 618, 571, 471, 369, 316, 20
 //   *  0  #
 
 
-const char keys[] = { // Match for display 
-    'X', // Corresponds to no support 
-    '#','0','*', // Key # returns 1... 
+const char keys[] = { // Match for display
+    'X', // Corresponds to no support
+    '#','0','*', // Key # returns 1...
     '9','8','7',
     '6','5','4',
     '3','2','1',

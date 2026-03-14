@@ -45,11 +45,9 @@ MTanalogButtons Keypad2(PIN_2, THRESHOLDS_TABLE); // Will force readings to 1024
 
 void setup()
 { 
-  Serial.begin(115200); // Also set the console to 115200 baud! 
-  analogReference(INTERNAL); // We thus go back and forth on the ADC between 5V and a low voltage if we press a button 
+  Serial.begin(115200); // Also set the console to 115200 baud!
+  analogReference(INTERNAL); // We thus go back and forth on the ADC between 5V and a low voltage if we press a button
   Serial.println("Press keys");
 }
 
-void loop()
-{
-}
+void loop(){}
